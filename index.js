@@ -44,6 +44,6 @@ app.get('/test.jpg', async function(req, res) {
         res.end();
     });
 });
-var command = ffmpeg('/dev/video0').outputFormat("mjpeg");
+var command = ffmpeg('/dev/video0').videoBitrate('1024k').outputFormat("mjpeg").fps(30).size('1080x720').addOptions("-q:v 6");
 var ffstream = command.pipe();
 app.listen(8080);
