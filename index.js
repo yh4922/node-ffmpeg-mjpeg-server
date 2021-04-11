@@ -30,20 +30,15 @@ app.get('/test.jpg', async function(req, res) {
         res.write(data, 'binary');
         res.write("\r\n");
     });
-    ffstream.on('data', function(chunk) {
-        PubSub.publish('MJPEG', chunk);
-    });
-    ffstream.on('end', function() {
-        console.log("Connection closed! End of stream!!!!");
-        PubSub.unsubscribe(sub);
-        res.end();
-    });
     res.on('close', function() {
         console.log("Connection closed!");
         PubSub.unsubscribe(sub);
         res.end();
     });
 });
-var command = ffmpeg('/dev/video0').videoBitrate('1024k').outputFormat("mjpeg").fps(30).size('1080x720').addOptions("-q:v 6");
+var command = ffmpeg('/dev/video0').videoBitrate('1024k').addInputOption("-re").outputFormat("mjpeg").fps(30).size('1080x720').addOptions("-q:v 6");
 var ffstream = command.pipe();
+ffstream.on('data', function(chunk) {
+    PubSub.publish('MJPEG', chunk);
+});
 app.listen(8080);
