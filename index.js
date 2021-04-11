@@ -36,7 +36,7 @@ app.get('/test.jpg', async function(req, res) {
         res.end();
     });
 });
-var command = ffmpeg('/dev/video0').videoBitrate('1024k').addInputOption("-re").outputFormat("mjpeg").fps(30).size('1080x720').addOptions("-q:v 6");
+var command = ffmpeg('/dev/video0').videoBitrate('1024k').addInputOption("-re").outputFormat("mjpeg").fps(30).size('1080x720').addOptions("-q:v 10");
 var ffstream = command.pipe();
 ffstream.on('data', function(chunk) {
     PubSub.publish('MJPEG', chunk);
