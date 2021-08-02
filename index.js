@@ -4,11 +4,12 @@ var fs = require('fs');
 var ffmpeg = require('fluent-ffmpeg');
 var PubSub = require("pubsub-js");
 var net = require("net");
+var chunks = Buffer.from([])
 var connections = 0
 var client = new net.Socket();
 const boundaryID = "BOUNDRY";
 app.get('/', (req, res, next) => {
-    res.sendfile('./index.html');
+    res.sendFile('./index.html', { root: __dirname });
 })
 
 app.get('/vid.jpg', function(req, res) {
@@ -23,7 +24,7 @@ app.get('/vid.jpg', function(req, res) {
 
     var sub = PubSub.subscribe('MJPEG', function(msg, data) {
 
-        //console.log(data.length);
+        console.log(data.length);
 
         res.write('--' + boundaryID + '\r\n')
         res.write('Content-Type: image/jpeg\r\n');
@@ -40,12 +41,17 @@ app.get('/vid.jpg', function(req, res) {
 });
 
 function ff() {
-    return ffmpeg('/dev/video2').videoBitrate('1024k').addInputOption("-re").outputFormat("mjpeg").fps(15).size('1080x720').addOptions("-q:v 10");
+    return ffmpeg('/dev/video2').videoBitrate('1024k').addInputOption("-re").outputFormat("mjpeg").fps(15).size('1080x720').addOptions("-q:v 0");
 }
 var command = ff();
 var ffstream = command.pipe();
 ffstream.on('data', function(chunk) {
-    PubSub.publish('MJPEG', chunk);
+    if (chunk[0] == 0xFF && chunk[1] == 0xD8) {
+        PubSub.publish('MJPEG', chunks);
+        chunks = chunk;
+    } else {
+        chunks = Buffer.concat([chunks, chunk]);
+    }
 });
 
 function restart() {
